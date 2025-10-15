@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Estudantes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        fieldset {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: white;
+        }
+        
+        legend {
+            font-weight: bold;
+            color: #2c3e50;
+            padding: 0 10px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .checkbox-group, .radio-group {
+            margin-bottom: 15px;
+        }
+        
+        .checkbox-group label, .radio-group label {
+            display: inline-block;
+            margin-right: 15px;
+            font-weight: normal;
+        }
+        
+        .checkbox-group input, .radio-group input {
+            width: auto;
+            margin-right: 5px;
+        }
+        
+        .button-group {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button[type="submit"] {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        button[type="reset"] {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .required {
+            color: red;
+        }
+        
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+        
+        .form-col {
+            flex: 1;
+            padding: 0 10px;
+            min-width: 200px;
+        }
+        
+        @media (max-width: 600px) {
+            .form-col {
+                flex: 100%;
+            }
+        }
+
+   
+
+    </style>
+</head>
+<body>
+   
+ <!-- Navegação entre páginas -->
+<div class="nav-container">
+  <a href="portifolio.html" class="nav-button">📄<span class="nav-tooltip">Currículo</span></a>
+  <a href="intro.html" class="nav-button">🖼️<span class="nav-tooltip">Galeria</span></a>
+</div>
+   
+    <h1>Cadastro de Estudantes</h1>
+    
+    <form action="processar.php" method="POST">
+        <!-- Dados Pessoais -->
+        <fieldset>
+            <legend>Dados Pessoais</legend>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="nome">Nome Completo <span class="required">*</span></label>
+                    <input type="text" id="nome" name="nome" required>
+                </div>
+                
+                <div class="form-col">
+                    <label for="data_nascimento">Data de Nascimento <span class="required">*</span></label>
+                    <input type="date" id="data_nascimento" name="data_nascimento" required>
+                </div>
+            </div>
+            
+            <div class="radio-group">
+                <label>Sexo <span class="required">*</span></label>
+                <label><input type="radio" name="sexo" value="Masculino" required> Masculino</label>
+                <label><input type="radio" name="sexo" value="Feminino"> Feminino</label>
+                <label><input type="radio" name="sexo" value="Outro"> Outro</label>
+            </div>
+        </fieldset>
+        
+        <!-- Informações de Contacto -->
+        <fieldset>
+            <legend>Informações de Contacto</legend>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="email">E-mail <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-col">
+                    <label for="telefone">Telefone <span class="required">*</span></label>
+                    <input type="tel" id="telefone" name="telefone" required>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="hora_cadastro">Hora de Cadastro</label>
+                    <input type="time" id="hora_cadastro" name="hora_cadastro">
+                </div>
+                
+                <div class="form-col">
+                    <label for="residencia">Residência</label>
+                    <input type="text" id="residencia" name="residencia">
+                </div>
+            </div>
+        </fieldset>
+        
+        <!-- Informações Acadêmicas -->
+        <fieldset>
+            <legend>Informações Acadêmicas</legend>
+            
+            <div class="form-row">
+                <div class="form-col">
+                    <label for="curso">Curso <span class="required">*</span></label>
+                    <select id="curso" name="curso" required>
+                        <option value="">--Selecione--</option>
+                        <option value="programacao">Programação</option>
+                        <option value="redes">Redes</option>
+                        <option value="design">Design</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="gestao">Gestão</option>
+                    </select>
+                </div>
+                
+                <div class="form-col">
+                    <label for="profissao">Profissão</label>
+                    <input type="text" id="profissao" name="profissao">
+                </div>
+            </div>
+            
+            <div class="checkbox-group">
+                <label>Hobbies/Interesses</label>
+                <label><input type="checkbox" name="hobbies" value="Música"> Música</label>
+                <label><input type="checkbox" name="hobbies" value="Desporto"> Desporto</label>
+                <label><input type="checkbox" name="hobbies" value="Tecnologia"> Tecnologia</label>
+                <label><input type="checkbox" name="hobbies" value="Leitura"> Leitura</label>
+                <label><input type="checkbox" name="hobbies" value="Arte"> Arte</label>
+                <label><input type="checkbox" name="hobbies" value="Viagens"> Viagens</label>
+            </div>
+        </fieldset>
+        
+        <!-- Mensagem e Termos -->
+        <fieldset>
+            <legend>Outras Informações</legend>
+            
+            <label for="mensagem">Mensagem/Comentários</label>
+            <textarea id="mensagem" name="mensagem" rows="4" cols="50" placeholder="Deixe sua mensagem aqui..."></textarea>
+            
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="termos" value="aceito" required> Aceito os termos e condições <span class="required">*</span></label>
+            </div>
+        </fieldset>
+        
+        <!-- Botões -->
+        <div class="button-group">
+            <button type="submit">Enviar</button>
+            <button type="reset">Limpar</button>
+        </div>
+    </form>
+</body>
+</html>

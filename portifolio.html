@@ -1,0 +1,254 @@
+<!doctype html> 
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Portfólio — Currículo Moderno</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+
+  
+    footer {
+      margin-top: 60px;
+      color: #9aa4b2;
+      font-size: 0.9rem;
+    }
+
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --muted:#9aa4b2;
+      --accent1:#7c5cff;
+      --accent2:#00d4ff;
+      --glass: rgba(255,255,255,0.04);
+      --glass-2: rgba(255,255,255,0.02);
+      --radius:18px;
+      color-scheme: dark;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial; background:linear-gradient(180deg,var(--bg),#08101a); color:#e6eef8; -webkit-font-smoothing:antialiased; transition:background .5s ease,color .5s ease; scroll-behavior:smooth}
+    .container{max-width:1100px;margin:36px auto;padding:28px;animation:fadeIn .9s ease forwards;opacity:0}
+    @keyframes fadeIn{to{opacity:1}}
+
+   
+    .topbar{display:flex;justify-content:flex-end;margin-bottom:20px}
+    .topbar button{padding:8px 14px;border-radius:12px;border:0;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));cursor:pointer;color:#041226;transition:transform .3s ease}
+    .topbar button:hover{transform:scale(1.05)}
+
+    
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:28px}
+    @media (max-width:880px){.grid{grid-template-columns:1fr}}
+
+   
+    .profile-card{background:linear-gradient(180deg,var(--card),#07101a);padding:26px;border-radius:var(--radius);box-shadow:0 8px 30px rgba(2,6,23,0.7);position:relative;overflow:hidden;text-align:center;animation:slideIn 1s ease}
+    @keyframes slideIn{from{transform:translateX(-30px);opacity:0} to{transform:translateX(0);opacity:1}}
+    .avatar{width:220px;height:220px;border-radius:18px;overflow:hidden;border:4px solid rgba(255,255,255,0.06);display:inline-block;box-shadow:0 6px 24px rgba(0,0,0,.5);transition:transform .4s ease}
+    .avatar:hover{transform:scale(1.08)}
+    .avatar img{width:100%;height:100%;object-fit:cover;display:block}
+    .name{font-weight:800;font-size:22px;margin-top:14px}
+    .role{color:var(--muted);font-weight:600;margin-top:6px}
+    .meta{color:var(--muted);margin-top:4px;font-size:14px}
+
+    
+    .socials{display:flex;justify-content:center;gap:10px;margin-top:16px}
+    .socials a{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;text-decoration:none;transition:transform .3s ease, box-shadow .3s ease}
+    .socials a:hover{transform:scale(1.1); box-shadow:0 0 12px rgba(255,255,255,0.2)}
+    .whatsapp{background:#25D366}
+    .facebook{background:#1877F2}
+    .instagram{background:radial-gradient(circle at 30% 30%, #feda75, #d62976, #962fbf, #4f5bd5)}
+
+    
+    .nav-links{margin-top:20px;display:flex;flex-direction:column;gap:10px}
+    .nav-links a{padding:10px;border-radius:10px;text-decoration:none;font-weight:600;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#041226;transition:transform .3s ease}
+    .nav-links a:hover{transform:scale(1.05)}
+
+    
+    .qr-section{margin-top:20px;text-align:center;padding:16px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:12px}
+    .qr-section h3{margin:0 0 12px 0;font-size:16px;font-weight:600;color:var(--muted)}
+    .qr-code{width:240px;height:240px;margin:0 auto;border-radius:18px;overflow:hidden;background:white;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,0.4);transition:transform .3s ease}
+    .qr-code:hover{transform:scale(1.05)}
+    .qr-code img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+    .qr-text{margin:12px 0 0 0;font-size:14px;color:var(--accent1);font-weight:600}
+
+    
+    .panel{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:22px;border-radius:var(--radius);box-shadow:0 8px 30px rgba(2,6,23,0.6);transition:transform .3s ease}
+    .panel:hover{transform:translateY(-4px)}
+    .headline{display:flex;align-items:center;justify-content:space-between}
+    .headline h1{margin:0;font-size:20px}
+    .intro{color:var(--muted);margin-top:10px;line-height:1.6}
+
+    
+    .skills{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px}
+    @media (max-width:640px){.skills{grid-template-columns:1fr}}
+    .skill{background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);padding:12px;border-radius:12px;position:relative;overflow:hidden}
+    .skill h4{margin:0 0 8px 0;font-size:14px}
+    .bar{height:10px;background:rgba(255,255,255,0.06);border-radius:999px;overflow:hidden}
+    .bar > i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent1),var(--accent2));transform:scaleX(0);animation:grow 1s forwards}
+    @keyframes grow{to{transform:scaleX(1)}}
+
+   
+    .projects{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px}
+    @media (max-width:880px){.projects{grid-template-columns:1fr}}
+    .project{padding:14px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent);border:1px solid rgba(255,255,255,0.02);transition:transform .28s ease,box-shadow .28s ease}
+    .project:hover{transform:translateY(-6px) scale(1.02);box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+
+    
+    .timeline{margin-top:16px}
+    .item{display:flex;gap:12px;padding:12px 0;border-top:1px dashed rgba(255,255,255,0.03);position:relative;transition:background .3s ease}
+    .item:hover{background:rgba(255,255,255,0.02)}
+    .item:first-child{border-top:0}
+    .dot{width:12px;height:12px;border-radius:50%;background:linear-gradient(90deg,var(--accent1),var(--accent2));flex:0 0 12px;margin-top:6px;box-shadow:0 0 10px var(--accent2)}
+    .meta{color:var(--muted);font-size:13px}
+
+  
+    .cta{display:flex;gap:12px;margin-top:18px}
+    .btn{padding:10px 14px;border-radius:12px;border:0;font-weight:700;background:linear-gradient(90deg,var(--accent1),var(--accent2));cursor:pointer;color:#041226;transition:transform .3s ease}
+    .btn:hover{transform:scale(1.05)}
+    .ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+
+   
+    .bg-blob{position:absolute;right:-120px;top:-80px;width:420px;height:420px;border-radius:50%;filter:blur(70px);opacity:0.22;background:radial-gradient(circle at 20% 20%,var(--accent1),transparent 25%),radial-gradient(circle at 80% 80%,var(--accent2),transparent 30%)}
+
+    .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.03),transparent);margin:18px 0;border-radius:999px}
+
+   
+    #toTop{position:fixed;bottom:20px;right:20px;width:46px;height:46px;border-radius:50%;border:0;background:linear-gradient(90deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.4);transition:transform .3s ease; z-index: 100;}
+    #toTop:hover{transform:scale(1.1)}
+    #toTop span{font-size:20px;color:#041226;font-weight:900}
+
+    @media print{body{color:#000;background:#fff} .container{max-width:100%} .bg-blob,.socials,.btn,.topbar,#toTop,.nav-links,.qr-section{display:none}}
+  </style>
+</head>
+<body>
+  
+  <!-- Navegação entre páginas -->
+<div class="nav-container">
+  <a href="intro.html" class="nav-button">🖼️<span class="nav-tooltip">Galeria</span></a>
+  <a href="formulario.html" class="nav-button">📝<span class="nav-tooltip">Formulário</span></a>
+</div>
+
+  <div class="container">
+  
+    <div class="topbar">
+      <button onclick="toggleTheme()">Alternar Tema</button>
+    </div>
+
+    <div class="grid">
+     
+      <aside class="profile-card">
+        <div class="bg-blob" aria-hidden></div>
+        <div class="avatar"><img src="kelsen.jpg" alt="Foto do candidato"></div>
+        <div class="name">KELSEN LOURES</div>
+        <div class="role">Desenvolvedor Web • HTML e CSS/Java</div>
+        <div class="meta">Maputo, Moçambique</div>
+
+       
+        <div class="socials">
+          <a href="https://wa.me/258879679702" target="_blank" class="whatsapp" aria-label="WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+          </a>
+          <a href="https://facebook.com/kelsen.manhica.7" target="_blank" class="facebook" aria-label="Facebook">
+            <i class="fab fa-facebook-f"></i>
+          </a>
+          <a href="https://www.instagram.com/loures_the_sir?igsh=dDFkdW5ocWI0eG9i" target="_blank" class="instagram" aria-label="Instagram">
+            <i class="fab fa-instagram"></i>
+          </a>
+        </div>
+
+        
+        <div class="nav-links">
+          <a href="#experiencia">Experiência</a>
+          <a href="#educacao">Educação</a>
+          <a href="#certificados">Certificados</a>
+        </div>
+
+       
+        <div class="qr-section">
+          <h3>Siga no Instagram</h3>
+          <div class="qr-code">
+            <img src="qr code.jpeg" alt="QR Code do Instagram" />
+          <p class="qr-text">@loures_the_sir</p>
+        </div>
+
+        <div class="Contactos">
+          <h2>Contacte-nos</h2>
+          <p><i>Contactos: 87 96 79 702/ 84 07 06 410</i></p>
+          <a herf mailto:kelsenloures@gmail.com">kelsenloures@gmail.com</a>
+        </div>
+
+      </aside>
+
+      
+      <main>
+        <section class="panel">
+          <div class="headline">
+            <h1>Resumo Profissional</h1>
+            <div class="muted">Atualizado: <strong id="updateDate">13/09/2025</strong></div>
+          </div>
+          <p class="intro">Sou um profissional focado em criar interfaces limpas e performáticas, com atenção em Python, JavaScript e boas práticas modernas.</p>
+
+          <div class="skills">
+            <div class="skill"><h4>HTML & CSS</h4><div class="bar"><i style="width:92%"></i></div></div>
+            <div class="skill"><h4>JavaScript</h4><div class="bar"><i style="width:85%"></i></div></div>
+            <div class="skill"><h4>React / Next</h4><div class="bar"><i style="width:78%"></i></div></div>
+            <div class="skill"><h4>UI Design</h4><div class="bar"><i style="width:74%"></i></div></div>
+          </div>
+
+          <div class="divider"></div>
+
+          <h2>Projetos Recentes</h2>
+          <div class="projects">
+            <article class="project"><h3>Criaçao de paginas web para vendas</h3><p>Criaçao de programas java.</p></article>
+            <article class="project"><h3>Sistema de Reservas</h3><p>Desenvolvedor de AI.</p></article>
+            <article class="project"><h3>Designer </h3><p>Gráficos dinâmicos e filtros avançados.</p></article>
+            <article class="project"><h3>Desenvolvimento java</h3><p>Criaçao de programas dinammicos.</p></article>
+          </div>
+
+          <div class="divider"></div>
+
+          <h2 id="experiencia">Experiência</h2> 
+          <div class="timeline">
+            <div class="item"><div class="dot"></div><div><div style="font-weight:700">Desenvolvedor web</div><div class="meta">2022 — presente</div></div></div>
+            <div class="item"><div class="dot"></div><div><div style="font-weight:700">Designer </div><div class="meta">2019 — 2025</div></div></div>
+          </div>
+        </section>
+
+        <section style="margin-top:18px">
+          <div class="panel">
+            <h2 id="educacao">Educação</h2>
+            <p class="muted">Técnico em Informática — ITC • 2022 — 2024</p>
+
+            <div class="divider"></div>
+
+            <h2 id="certificados">Certificados</h2>
+            <p class="muted">Desenvolvimento Web — curso online</p>
+          </div>
+        </section>
+        
+  
+  <button id="toTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Voltar ao topo">
+    <i class="fas fa-arrow-up"></i>
+  </button>
+
+  <script>
+    function toggleTheme(){
+      const r=document.documentElement;
+      if(r.style.getPropertyValue('--bg')==='#0f1724'){
+        r.style.setProperty('--bg','#f7f9fb');
+        r.style.setProperty('--card','#ffffff');
+        r.style.setProperty('--muted','#5b6b79');
+        document.body.style.color='#09121a';
+      } else {
+        r.style.setProperty('--bg','#0f1724');
+        r.style.setProperty('--card','#0b1220');
+        r.style.setProperty('--muted','#9aa4b2');
+        document.body.style.color='#e6eef8';
+      }
+    }
+  </script>
+</body>
+</html>

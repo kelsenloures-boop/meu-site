@@ -541,6 +541,95 @@ html,body{height:100%;background:var(--cream);font-family:'Jost',sans-serif;colo
 // ============================================
 const JSONBIN_API_KEY = '$2a$10$5MUAxH9pINPUsk4gfdQ6NOe68fT3N.9NF22OffX1k1TnC28hL2k9a';
 
+// ============================================
+// CLOUDINARY — upload de imagens em alta qualidade
+// Cloud: daqiu7ave
+// ============================================
+const CLOUDINARY_CLOUD_NAME = 'daqiu7ave';
+const CLOUDINARY_API_KEY    = '979725238987339';
+// Preset unsigned — vai a cloudinary.com > Settings > Upload > Upload Presets
+// Clica "Add upload preset", muda Signing Mode para "Unsigned", copia o nome e cola aqui:
+const CLOUDINARY_UPLOAD_PRESET = 'ml_default'; // substitui se criaste um preset com outro nome
+
+async function uploadPhotoToCloudinary(dataUrl, tentativa = 1) {
+  try {
+    // 1. Comprimir a imagem antes de enviar (max 1200px, qualidade 0.82)
+    const compressed = await compressDataUrl(dataUrl, 1200, 0.82);
+
+    // 2. Converter para Blob
+    const fetchRes = await fetch(compressed);
+    const blob = await fetchRes.blob();
+    console.log(`[Cloudinary] foto ${tentativa}ª tentativa — ${Math.round(blob.size/1024)}KB`);
+
+    // 3. Montar FormData
+    const form = new FormData();
+    form.append('file', blob, 'foto.jpg');
+    form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    form.append('folder', 'presentes');
+
+    // 4. Upload com timeout de 30s
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
+
+    const r = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: form, signal: controller.signal }
+    );
+    clearTimeout(timer);
+
+    if (!r.ok) {
+      const errData = await r.json().catch(() => ({}));
+      const msg = errData.error?.message || ('HTTP ' + r.status);
+      console.error('[Cloudinary] erro:', msg);
+      if(String(msg).toLowerCase().includes('preset') || String(msg).toLowerCase().includes('unsigned')) {
+        showToast('⚠️ Cloudinary: activa o preset "' + CLOUDINARY_UPLOAD_PRESET + '" como Unsigned.');
+        return null; // não tentar de novo
+      }
+      throw new Error(msg);
+    }
+
+    const data = await r.json();
+    console.log('[Cloudinary] ✅ upload ok:', data.public_id);
+    return data.secure_url.replace('/upload/', '/upload/w_1200,q_auto,f_auto/');
+
+  } catch(err) {
+    console.error('[Cloudinary] catch:', err.message);
+    if(tentativa < 3) {
+      console.log(`[Cloudinary] a tentar novamente (${tentativa+1}/3)...`);
+      await new Promise(r => setTimeout(r, 2000));
+      return uploadPhotoToCloudinary(dataUrl, tentativa + 1);
+    }
+    // Depois de 3 tentativas, usar base64 comprimida como fallback
+    console.warn('[Cloudinary] falhou 3x — usando base64 comprimida como fallback');
+    return await compressDataUrl(dataUrl, 600, 0.55);
+  }
+}
+
+// Comprime um dataUrl para as dimensões e qualidade indicadas
+async function compressDataUrl(dataUrl, maxSize, quality) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if(w > maxSize || h > maxSize) {
+        if(w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+        else { w = Math.round(w * maxSize / h); h = maxSize; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl); // se falhar, devolver original
+    img.src = dataUrl;
+  });
+}
+
+// Cloudinary está sempre configurado (cloud name definido)
+function cloudinaryConfigurado() {
+  return true;
+}
+
 // ===== ESTADO GLOBAL =====
 const state = {
   sender: '', receiver: '', startDate: '',
@@ -743,7 +832,71 @@ function onSearchTyping() {
   searchTimeout = setTimeout(() => {
     const q = document.getElementById('music-search').value.trim();
     if(q.length > 2) searchMusic();
-  }, 500);
+  }, 600);
+}
+
+// Normaliza resultados do Deezer para formato interno
+function normalizeDeezer(tracks) {
+  return tracks.map(t => ({
+    trackName: t.title,
+    artistName: t.artist?.name || '',
+    artworkUrl100: t.album?.cover_medium || t.album?.cover || '',
+    previewUrl: t.preview || ''
+  }));
+}
+
+// Tenta buscar da API do Deezer (CORS nativo, funciona sem proxy)
+async function fetchDeezer(q) {
+  const url = `https://api.deezer.com/search?q=${encodeURIComponent(q)}&limit=8&output=json`;
+  // Deezer bloqueia CORS em alguns ambientes — usar proxy leve
+  const proxies = [
+    `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`,
+    `https://corsproxy.io/?${encodeURIComponent(url)}`,
+    `https://cors-anywhere.herokuapp.com/${url}`
+  ];
+  for (const proxy of proxies) {
+    try {
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(proxy, { signal: controller.signal });
+      if (!res.ok) continue;
+      let json;
+      if (proxy.includes('allorigins')) {
+        const raw = await res.json();
+        json = JSON.parse(raw.contents);
+      } else {
+        json = await res.json();
+      }
+      if (json?.data?.length) return normalizeDeezer(json.data);
+    } catch(e) { console.warn('[Deezer] proxy falhou:', proxy, e.message); }
+  }
+  return null;
+}
+
+// Tenta buscar do iTunes via múltiplos proxies
+async function fetchItunes(q) {
+  const itunesUrl = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&limit=8&country=pt`;
+  const proxies = [
+    `https://corsproxy.io/?${encodeURIComponent(itunesUrl)}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(itunesUrl)}`
+  ];
+  for (const proxy of proxies) {
+    try {
+      const controller = new AbortController();
+      setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(proxy, { signal: controller.signal });
+      if (!res.ok) continue;
+      let json;
+      if (proxy.includes('allorigins')) {
+        const raw = await res.json();
+        json = JSON.parse(raw.contents);
+      } else {
+        json = await res.json();
+      }
+      if (json?.results?.length) return json.results;
+    } catch(e) { console.warn('[iTunes] proxy falhou:', proxy, e.message); }
+  }
+  return null;
 }
 
 async function searchMusic() {
@@ -752,24 +905,32 @@ async function searchMusic() {
   const resultsDiv = document.getElementById('music-results');
   resultsDiv.style.display = 'block';
   resultsDiv.innerHTML = '<div style="padding:1.2rem;text-align:center;color:#9a7e84;font-size:.85rem">🔍 A pesquisar...</div>';
-  try {
-    const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&limit=6&country=pt`);
-    const data = await res.json();
-    if(!data.results.length){resultsDiv.innerHTML='<div style="padding:1.2rem;text-align:center;color:#9a7e84;font-size:.85rem">😔 Nenhum resultado. Tenta outro termo.</div>';return}
-    
-    resultsDiv.innerHTML = data.results.map((t,idx) => `
-      <div class="music-result-item" id="mitem-${idx}" onclick="selectMusic(${idx},'${escapeString(t.trackName)}','${escapeString(t.artistName)}','${t.artworkUrl100 || ''}','${t.previewUrl || ''}')">
-        <img class="music-thumb" src="${t.artworkUrl100 || 'https://via.placeholder.com/44'}" alt="">
-        <div class="music-info">
-          <div class="music-name">${escapeHtml(t.trackName)}</div>
-          <div class="music-artist">${escapeHtml(t.artistName)}</div>
-        </div>
-        <button class="music-play-btn" onclick="previewTrack(event,'${t.previewUrl || ''}')" title="Pré-ouvir">▶</button>
-      </div>
-    `).join('');
-  } catch(e) {
-    resultsDiv.innerHTML='<div style="padding:1.2rem;text-align:center;color:#9a7e84;font-size:.85rem">❌ Erro na pesquisa. Tenta novamente.</div>';
+
+  // Tentar Deezer primeiro, depois iTunes como fallback
+  let tracks = await fetchDeezer(q);
+  let fonte = 'Deezer';
+  if (!tracks || tracks.length === 0) {
+    console.log('[Música] Deezer falhou, a tentar iTunes...');
+    tracks = await fetchItunes(q);
+    fonte = 'iTunes';
   }
+
+  if (!tracks || tracks.length === 0) {
+    resultsDiv.innerHTML = '<div style="padding:1.2rem;text-align:center;color:#9a7e84;font-size:.85rem">😔 Nenhum resultado. Tenta outro termo ou verifica a ligação.</div>';
+    return;
+  }
+
+  console.log(`[Música] ${tracks.length} resultados via ${fonte}`);
+  resultsDiv.innerHTML = tracks.map((t, idx) => `
+    <div class="music-result-item" id="mitem-${idx}" onclick="selectMusic(${idx},'${escapeString(t.trackName)}','${escapeString(t.artistName)}','${escapeString(t.artworkUrl100 || '')}','${escapeString(t.previewUrl || '')}')">
+      <img class="music-thumb" src="${t.artworkUrl100 || 'https://via.placeholder.com/44'}" alt="" onerror="this.src='https://via.placeholder.com/44'">
+      <div class="music-info">
+        <div class="music-name">${escapeHtml(t.trackName)}</div>
+        <div class="music-artist">${escapeHtml(t.artistName)}</div>
+      </div>
+      <button class="music-play-btn" onclick="previewTrack(event,'${escapeString(t.previewUrl || '')}')" title="Pré-ouvir">▶</button>
+    </div>
+  `).join('');
 }
 
 function escapeString(str) {
@@ -830,56 +991,68 @@ async function conclude() {
   const msg = document.getElementById('message').value.trim();
   if(!msg){showToast('💌 Escreve uma mensagem para ela');return}
   state.message = msg;
+
+  let photosParaGuardar = state.photos.map(p => ({...p}));
+
+  // ── MODO A: Cloudinary configurado → upload de alta qualidade ──
+  if(cloudinaryConfigurado()) {
+    const total = state.photos.length;
+    showLoading(`☁️ A enviar foto 1 de ${total}...`);
+    const uploadedPhotos = [];
+    for(let i = 0; i < total; i++) {
+      document.getElementById('loading-text').textContent =
+        `☁️ A enviar foto ${i+1} de ${total}... aguarda ☁️`;
+      const cloudUrl = await uploadPhotoToCloudinary(state.photos[i].url);
+      // cloudUrl pode ser URL do Cloudinary ou base64 (fallback) — ambos são válidos
+      uploadedPhotos.push({ url: cloudUrl || state.photos[i].url, name: state.photos[i].name });
+    }
+    photosParaGuardar = uploadedPhotos;
+
+  // ── MODO B: Sem Cloudinary → comprimir base64 para caber no JSONBin ──
+  } else {
+    showLoading('📸 A comprimir fotos...');
+    // Verificar tamanho
+    const payloadKB = Math.round(JSON.stringify(state.photos).length / 1024);
+    console.log(`Fotos base64: ~${payloadKB}KB`);
+    if(payloadKB > 400) {
+      // Comprimir mais agressivamente
+      for(let i = 0; i < photosParaGuardar.length; i++) {
+        const img = new Image();
+        await new Promise(resolve => {
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxSize = 300;
+            let w = img.width, h = img.height;
+            if(w > maxSize || h > maxSize) {
+              if(w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+              else { w = Math.round(w * maxSize / h); h = maxSize; }
+            }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            photosParaGuardar[i].url = canvas.toDataURL('image/jpeg', 0.3);
+            resolve();
+          };
+          img.src = photosParaGuardar[i].url;
+        });
+      }
+    }
+  }
+
   showLoading('✨ A criar o vosso presente mágico...');
-  
-  // Verificar tamanho total do payload antes de enviar
+
   const giftData = {
     sender: state.sender,
     receiver: state.receiver,
     startDate: state.startDate,
     message: state.message,
     music: state.music,
-    photos: state.photos,
+    photos: photosParaGuardar,
     created: Date.now()
   };
-  
-  const payloadStr = JSON.stringify(giftData);
-  const payloadKB = Math.round(payloadStr.length / 1024);
-  console.log(`Tamanho do payload: ~${payloadKB}KB`);
-  
-  // JSONBin.io free tier suporta até ~512KB por bin
-  if(payloadKB > 480) {
-    hideLoading();
-    // Comprimir ainda mais as fotos automaticamente
-    showLoading('📸 Comprimindo fotos para a nuvem...');
-    for(let i = 0; i < state.photos.length; i++) {
-      const img = new Image();
-      await new Promise(resolve => {
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const maxSize = 300;
-          let w = img.width, h = img.height;
-          if(w > maxSize || h > maxSize) {
-            if(w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
-            else { w = Math.round(w * maxSize / h); h = maxSize; }
-          }
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          state.photos[i].url = canvas.toDataURL('image/jpeg', 0.3);
-          resolve();
-        };
-        img.src = state.photos[i].url;
-      });
-    }
-    giftData.photos = state.photos;
-    showLoading('✨ A enviar para a nuvem...');
-  }
-  
-  // Salvar na nuvem — o binId retornado vai directamente no URL
+
   const binId = await createGiftInCloud(giftData);
-  
+
   if(binId) {
-    // Cache local opcional (acelera abertura no mesmo dispositivo)
     try { localStorage.setItem(`gift_${binId}`, JSON.stringify(giftData)); } catch(e){}
     state.giftId = binId;
     hideLoading();
@@ -888,7 +1061,7 @@ async function conclude() {
     showToast('✨ Presente salvo na nuvem com sucesso!');
   } else {
     hideLoading();
-    showToast('❌ As fotos são muito grandes. Remove algumas ou usa fotos menores.');
+    showToast('❌ Erro ao salvar. Verifica a ligação e tenta novamente.');
   }
 }
 

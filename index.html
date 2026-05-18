@@ -566,11 +566,14 @@ async function createGiftInCloud(giftData) {
     });
     if (!response.ok) {
       const err = await response.text();
-      console.error('JSONBin erro:', err);
+      console.error('JSONBin erro:', response.status, err);
+      if(response.status === 400 || response.status === 413) {
+        console.warn('Payload demasiado grande para JSONBin.');
+      }
       return null;
     }
     const data = await response.json();
-    return data.metadata.id; // Este é o ID único que vai no URL
+    return data.metadata.id;
   } catch (error) {
     console.error('Erro ao criar presente:', error);
     return null;
@@ -643,29 +646,54 @@ function buildUploadGrid() {
   document.getElementById('photo-count').textContent = state.photos.length;
 }
 
+function compressToTarget(img, targetKB) {
+  // Tenta vários níveis de qualidade e tamanho até atingir o targetKB
+  const targets = [
+    { maxSize: 800, quality: 0.7 },
+    { maxSize: 700, quality: 0.6 },
+    { maxSize: 600, quality: 0.5 },
+    { maxSize: 500, quality: 0.45 },
+    { maxSize: 400, quality: 0.4 },
+    { maxSize: 350, quality: 0.35 },
+  ];
+  let result = null;
+  for (const t of targets) {
+    const canvas = document.createElement('canvas');
+    let w = img.width, h = img.height;
+    if (w > t.maxSize || h > t.maxSize) {
+      if (w > h) { h = Math.round(h * t.maxSize / w); w = t.maxSize; }
+      else { w = Math.round(w * t.maxSize / h); h = t.maxSize; }
+    }
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    result = canvas.toDataURL('image/jpeg', t.quality);
+    // base64 ~4/3 dos bytes reais
+    const sizeKB = Math.round(result.length * 3 / 4 / 1024);
+    if (sizeKB <= targetKB) break;
+  }
+  return result;
+}
+
 function handleFiles(files) {
   const remaining = 8 - state.photos.length;
-  const arr = Array.from(files).slice(0,remaining);
+  const arr = Array.from(files).slice(0, remaining);
+  // Cada foto pode ter no máx ~80KB para 8 fotos caberem bem no JSONBin (~640KB total payload)
+  const TARGET_KB = 80;
+  let processed = 0;
   arr.forEach(file => {
-    if(!file.type.startsWith('image/')) return;
+    if (!file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = e => {
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        const maxSize = 600;
-        if(width > maxSize || height > maxSize) {
-          if(width > height) { height = (height * maxSize) / width; width = maxSize; }
-          else { width = (width * maxSize) / height; height = maxSize; }
-        }
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        const compressedUrl = canvas.toDataURL('image/jpeg', 0.6);
-        state.photos.push({url: compressedUrl, name: file.name});
+        const compressedUrl = compressToTarget(img, TARGET_KB);
+        const sizeKB = Math.round(compressedUrl.length * 3 / 4 / 1024);
+        state.photos.push({ url: compressedUrl, name: file.name });
         buildUploadGrid();
+        processed++;
+        if (processed === arr.length) {
+          showToast(`📸 ${arr.length} foto(s) adicionada(s) com sucesso!`);
+        }
       };
       img.src = e.target.result;
     };
@@ -804,6 +832,7 @@ async function conclude() {
   state.message = msg;
   showLoading('✨ A criar o vosso presente mágico...');
   
+  // Verificar tamanho total do payload antes de enviar
   const giftData = {
     sender: state.sender,
     receiver: state.receiver,
@@ -813,6 +842,38 @@ async function conclude() {
     photos: state.photos,
     created: Date.now()
   };
+  
+  const payloadStr = JSON.stringify(giftData);
+  const payloadKB = Math.round(payloadStr.length / 1024);
+  console.log(`Tamanho do payload: ~${payloadKB}KB`);
+  
+  // JSONBin.io free tier suporta até ~512KB por bin
+  if(payloadKB > 480) {
+    hideLoading();
+    // Comprimir ainda mais as fotos automaticamente
+    showLoading('📸 Comprimindo fotos para a nuvem...');
+    for(let i = 0; i < state.photos.length; i++) {
+      const img = new Image();
+      await new Promise(resolve => {
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxSize = 300;
+          let w = img.width, h = img.height;
+          if(w > maxSize || h > maxSize) {
+            if(w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+            else { w = Math.round(w * maxSize / h); h = maxSize; }
+          }
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          state.photos[i].url = canvas.toDataURL('image/jpeg', 0.3);
+          resolve();
+        };
+        img.src = state.photos[i].url;
+      });
+    }
+    giftData.photos = state.photos;
+    showLoading('✨ A enviar para a nuvem...');
+  }
   
   // Salvar na nuvem — o binId retornado vai directamente no URL
   const binId = await createGiftInCloud(giftData);
@@ -827,7 +888,7 @@ async function conclude() {
     showToast('✨ Presente salvo na nuvem com sucesso!');
   } else {
     hideLoading();
-    showToast('❌ Erro ao salvar. Verifica a tua ligação e tenta novamente.');
+    showToast('❌ As fotos são muito grandes. Remove algumas ou usa fotos menores.');
   }
 }
 
